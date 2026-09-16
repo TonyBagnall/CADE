@@ -10,7 +10,7 @@ from aeon.datasets.tsc_datasets import univariate_equal_length
 from aeon.distances import pairwise_distance
 from sklearn.utils import check_random_state
 
-from soft_msm.experiments._utils import (
+from cade.experiments._utils import (
     _parse_command_line_bool,
     get_averaging_params,
     get_distance_default_params,

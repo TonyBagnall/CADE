@@ -1,1 +1,1 @@
-"""Soft-MSM package."""
+"""CADE package."""

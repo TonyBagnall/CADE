@@ -6,14 +6,14 @@ from aeon.clustering import (
     TimeSeriesKShape,
 )
 
-from soft_msm.experiments._classification_models import (
+from cade.experiments._classification_models import (
     DEFAULT_MSM_PARAMS,
     DEFAULT_SOFT_DBA_PARAMS,
-    DEFAULT_SOFT_MBA_PARAMS,
+    DEFAULT_CADE_BA_PARAMS,
 )
 
 
-def soft_mba_hard_dist_clusterer(
+def cade_ba_hard_dist_clusterer(
     n_clusters: int, gamma: float, random_state: int, n_jobs: int
 ) -> BaseClusterer:
     return TimeSeriesKMeans(
@@ -27,12 +27,12 @@ def soft_mba_hard_dist_clusterer(
         random_state=random_state,
         averaging_method="soft",
         distance_params=DEFAULT_MSM_PARAMS,
-        average_params={**DEFAULT_SOFT_MBA_PARAMS, "gamma": gamma},
+        average_params={**DEFAULT_CADE_BA_PARAMS, "gamma": gamma},
         n_jobs=n_jobs,
     )
 
 
-def soft_mba_clusterer(
+def cade_ba_clusterer(
     n_clusters: int, gamma: float, random_state: int, n_jobs: int
 ) -> BaseClusterer:
     return TimeSeriesKMeans(
@@ -46,7 +46,7 @@ def soft_mba_clusterer(
         random_state=random_state,
         averaging_method="soft",
         distance_params={**DEFAULT_MSM_PARAMS, "gamma": gamma},
-        average_params={**DEFAULT_SOFT_MBA_PARAMS, "gamma": gamma},
+        average_params={**DEFAULT_CADE_BA_PARAMS, "gamma": gamma},
         n_jobs=n_jobs,
     )
 
@@ -229,8 +229,8 @@ def kshape_clusterer(n_clusters: int, random_state: int, *args) -> BaseClusterer
 
 
 CLUSTERING_EXPERIMENT_MODELS = {
-    "soft-MBA": soft_mba_clusterer,
-    "soft-MBA-hard-dist": soft_mba_hard_dist_clusterer,
+    "CADE-BA": cade_ba_clusterer,
+    "CADE-BA-hard-dist": cade_ba_hard_dist_clusterer,
     "soft-DBA": soft_dba_clusterer,
     "soft-DBA-hard-dist": soft_dba_hard_dist_clusterer,
     "KASBA": kasba_clusterer,

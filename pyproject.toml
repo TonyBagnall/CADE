@@ -3,9 +3,9 @@ requires = ["setuptools>61", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "soft-msm"
+name = "cade"
 version = "0.1"
-description = "Soft MSM"
+description = "CADE: Context-Aware Differentiable Elastic Alignment"
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "Christopher Holder" }]
 requires-python = ">=3.10"
@@ -54,7 +54,7 @@ all = [
 ]
 
 [tool.setuptools]
-packages = ["soft_msm"]
+packages = ["cade"]
 
 [tool.ruff.lint]
 select = ["D"]
@@ -67,12 +67,12 @@ convention = "numpy"
 
 [tool.flake8]
 per-file-ignores = [
-    "soft_msm/jax/tests/test_*.py:E402",
+    "cade/jax/tests/test_*.py:E402",
 ]
 
 [tool.pytest.ini_options]
 testpaths = [
-    "soft_msm"
+    "cade"
 ]
 addopts = '''
     --doctest-modules

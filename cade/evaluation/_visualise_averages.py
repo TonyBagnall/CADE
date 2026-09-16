@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from aeon.clustering.averaging import elastic_barycenter_average
 
-from soft_msm.experiments._utils import (
+from cade.experiments._utils import (
     get_averaging_params,
     load_and_validate_env,
     load_dataset_from_file,
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # --- Define methods + their parameter configs ---
     # Two different soft configurations (different gamma), plus petitjean + subgradient.
     labels = [
-        "Soft-MSM (γ=0.001)",
+        "CADE (γ=0.001)",
         "Soft-DTW (γ=0.001)",
         "MBA",
         "SSG-MBA",

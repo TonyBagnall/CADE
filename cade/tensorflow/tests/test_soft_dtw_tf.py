@@ -9,8 +9,8 @@ from aeon.distances.elastic.soft import (
 )
 from aeon.distances.elastic.soft import soft_dtw_grad_x as aeon_soft_dtw_grad_x
 
-from soft_msm.tensorflow import SoftDTWLoss, soft_dtw_alignment_matrix, soft_dtw_grad_x
-from soft_msm.tensorflow.tests._utils import check_arrays_close, check_values_close
+from cade.tensorflow import SoftDTWLoss, soft_dtw_alignment_matrix, soft_dtw_grad_x
+from cade.tensorflow.tests._utils import check_arrays_close, check_values_close
 
 GAMMAS = [0.05, 0.1, 0.25, 0.5, 0.75, 1.0]
 

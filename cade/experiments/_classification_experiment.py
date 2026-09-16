@@ -4,8 +4,8 @@ from tsml_eval.experiments import (
     run_classification_experiment as tsml_classification_experiment,
 )
 
-from soft_msm.experiments._classification_models import CLASSIFICATION_EXPERIMENT_MODELS
-from soft_msm.experiments._utils import (
+from cade.experiments._classification_models import CLASSIFICATION_EXPERIMENT_MODELS
+from cade.experiments._utils import (
     check_experiment_results_exist,
     load_and_validate_env,
     load_dataset_from_file,
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         print("RUNNING WITH TEST CONFIG")
 
         dataset = "GunPoint"
-        classifier_name = "NearestCentroid-soft-MBA"
+        classifier_name = "NearestCentroid-CADE-BA"
 
         env = load_and_validate_env()
         dataset_path = env["DATASET_PATH"]

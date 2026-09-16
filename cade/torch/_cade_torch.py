@@ -1,4 +1,4 @@
-# soft_msm/torch/_soft_msm_torch.py
+# cade/torch/_cade_torch.py
 import torch
 from torch import nn
 
@@ -98,7 +98,7 @@ def _trans_cost_row_left(y_slice, y_prev_slice, xi, c: float, gamma: float):
 # -------------------- 1D core (your kernel) --------------------
 
 
-def _soft_msm_torch_1d(
+def _cade_torch_1d(
     x: torch.Tensor,
     y: torch.Tensor,
     *,
@@ -106,7 +106,7 @@ def _soft_msm_torch_1d(
     gamma: float = 1.0,  # > 0
     window: int | None = None,  # Sakoe–Chiba half-width
 ) -> torch.Tensor:
-    """Compute differentiable soft-MSM distance between 1D series.
+    """Compute differentiable CADE distance between 1D series.
 
     Returns a scalar tensor suitable for .backward().
     """
@@ -186,7 +186,7 @@ def _soft_msm_torch_1d(
 # -------------------- batched, multichannel DP --------------------
 
 
-def _soft_msm_costs_batched(
+def _cade_costs_batched(
     x: torch.Tensor,  # (B, C, T)
     y: torch.Tensor,  # (B, C, U)
     c: float,
@@ -201,14 +201,14 @@ def _soft_msm_costs_batched(
     B, C, _ = x.shape
     costs = torch.zeros(B, dtype=x.dtype, device=x.device)
     for b in range(B):
-        costs[b] = costs[b] + _soft_msm_torch_1d(x[b, 0], y[b, 0], c=c, gamma=gamma)
+        costs[b] = costs[b] + _cade_torch_1d(x[b, 0], y[b, 0], c=c, gamma=gamma)
     return costs  # (B,)
 
 
 # -------------------- alignment (expected diag match occupancy) --------------------
 
 
-def _soft_msm_costs_from_M_batched(
+def _cade_costs_from_M_batched(
     M: torch.Tensor,  # (B, T, U) diagonal-match matrix (leaf)
     x: torch.Tensor,  # (B, C, T) detached (for transitions)
     y: torch.Tensor,  # (B, C, U) detached
@@ -258,8 +258,8 @@ def _device_supports_fp64(t: torch.Tensor) -> bool:
 # ------------------------------- public API --------------------------------
 
 
-class SoftMSMLoss(nn.Module):
-    """Compute Soft-MSM loss (batched, multichannel), mirroring Aeon/Numba.
+class CADELoss(nn.Module):
+    """Compute CADE loss (batched, multichannel), mirroring Aeon/Numba.
 
     - exact channel-0 DP
     - CUDA/CPU: float64-parity (if you feed float64)
@@ -278,7 +278,7 @@ class SoftMSMLoss(nn.Module):
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         # device-native (keeps autograd)
-        costs_dev = _soft_msm_costs_batched(
+        costs_dev = _cade_costs_batched(
             x.to(x.dtype), y.to(y.dtype), c=self.c, gamma=self.gamma
         )
 
@@ -290,7 +290,7 @@ class SoftMSMLoss(nn.Module):
                 # two-step move avoids MPS fp64 conversion error
                 x64 = x.detach().to("cpu").to(torch.float64)
                 y64 = y.detach().to("cpu").to(torch.float64)
-                costs_cpu64 = _soft_msm_costs_batched(
+                costs_cpu64 = _cade_costs_batched(
                     x64, y64, c=self.c, gamma=self.gamma
                 )
             # value override, gradient from device graph
@@ -305,13 +305,13 @@ class SoftMSMLoss(nn.Module):
         return costs
 
 
-def soft_msm_alignment_matrix(
+def cade_alignment_matrix(
     x: torch.Tensor,
     y: torch.Tensor,
     c: float = 1.0,
     gamma: float = 1.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Compute expected diagonal-match occupancy E and Soft-MSM cost.
+    """Compute expected diagonal-match occupancy E and CADE cost.
 
     E : (B, T, U), channel 0 only (matches Aeon)
     s : (B,) float64 (for equivalence)
@@ -323,7 +323,7 @@ def soft_msm_alignment_matrix(
     M = (x64[:, 0, :, None] - y64[:, 0, None, :]) ** 2
     M.requires_grad_(True)
 
-    s64 = _soft_msm_costs_from_M_batched(M, x64, y64, c=c, gamma=gamma)  # (B,)
+    s64 = _cade_costs_from_M_batched(M, x64, y64, c=c, gamma=gamma)  # (B,)
     (E64,) = torch.autograd.grad(s64.sum(), M, retain_graph=False, create_graph=False)
 
     # Move back to caller device (values only; grads not needed). MPS cannot
@@ -335,14 +335,14 @@ def soft_msm_alignment_matrix(
 
 
 @torch.no_grad()
-def soft_msm_grad_x(
+def cade_grad_x(
     x: torch.Tensor,
     y: torch.Tensor,
     c: float = 1.0,
     gamma: float = 1.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
-    Gradient of Soft-MSM cost w.r.t. x, computed on CPU float64 for equivalence.
+    Gradient of CADE cost w.r.t. x, computed on CPU float64 for equivalence.
 
     Returns
     -------
@@ -353,7 +353,7 @@ def soft_msm_grad_x(
         x64 = x.detach().to("cpu").to(torch.float64).clone().requires_grad_(True)
         y64 = y.detach().to("cpu").to(torch.float64)
 
-        s64 = _soft_msm_costs_batched(x64, y64, c=c, gamma=gamma)  # (B,)
+        s64 = _cade_costs_batched(x64, y64, c=c, gamma=gamma)  # (B,)
         (dx64,) = torch.autograd.grad(
             s64.sum(), x64, retain_graph=False, create_graph=False
         )

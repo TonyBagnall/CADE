@@ -3,8 +3,8 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from soft_msm.experiments._forecasting_models import FORECASTING_EXPERIMENT_MODELS
-from soft_msm.experiments._utils import (
+from cade.experiments._forecasting_models import FORECASTING_EXPERIMENT_MODELS
+from cade.experiments._utils import (
     _parse_command_line_bool,
     check_experiment_results_exist,
     load_and_validate_env,

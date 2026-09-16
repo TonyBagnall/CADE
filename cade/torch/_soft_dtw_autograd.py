@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from soft_msm.torch._utils import _pairwise_sq_dists, _softmin3, _softmin3_weights
+from cade.torch._utils import _pairwise_sq_dists, _softmin3, _softmin3_weights
 
 
 @torch.no_grad()

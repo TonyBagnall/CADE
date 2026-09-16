@@ -155,6 +155,8 @@ if __name__ == "__main__":
                 f"Required model column '{required}' not found in CSV header."
             )
 
+    # "soft-MBA-hard-dist" is the pre-rename key of CADE-BA-hard-dist; it matches
+    # the column headers already stored in results/clustering/inertia_values.csv.
     mba_results = compare_soft_vs_base(
         inertias=inertias,
         datasets=datasets,

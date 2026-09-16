@@ -165,11 +165,11 @@ def generate_latex_from_dataframe(df: pd.DataFrame, method: str) -> str:
         label = "tab:soft_dtw_vs_baselines_by_gamma"
     else:  # msm
         caption = (
-            "Percentage of datasets on which the Soft-MSM Barycentre Average "
+            "Percentage of datasets on which the CADE Barycentre Average "
             "achieves a lower MSM loss compared to Moving Barycentre Averaging "
             "(MBA) and Stochastic Subgradient Moving Barycentre Averaging (SSG-MBA)."
         )
-        label = "tab:soft_msm_vs_baselines_by_gamma"
+        label = "tab:cade_vs_baselines_by_gamma"
 
     gamma_display = {"1.0": "1", "0.1": "0.1", "0.01": "0.01", "0.001": "0.001"}
     gammas = ["1.0", "0.1", "0.01", "0.001"]

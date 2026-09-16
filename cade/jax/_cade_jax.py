@@ -1,16 +1,16 @@
-"""JAX implementation of Soft-MSM distance."""
+"""JAX implementation of CADE distance."""
 
 from __future__ import annotations
 
 import jax
 import jax.numpy as jnp
 
-from soft_msm.jax._utils import _softmin3, _trans_cost
+from cade.jax._utils import _softmin3, _trans_cost
 
 
-def _soft_msm_1d(x, y, c=1.0, gamma=1.0):
+def _cade_1d(x, y, c=1.0, gamma=1.0):
     """
-    Soft-MSM distance between 1D series.
+    CADE distance between 1D series.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ def _soft_msm_1d(x, y, c=1.0, gamma=1.0):
     return prev_row[m - 1]
 
 
-def _soft_msm_costs_batched(x, y, c, gamma):
+def _cade_costs_batched(x, y, c, gamma):
     """
     Run DP on channel 0 per batch (matching Aeon's univariate MSM convention).
 
@@ -69,14 +69,14 @@ def _soft_msm_costs_batched(x, y, c, gamma):
     B = x.shape[0]
     costs = jnp.zeros(B, dtype=x.dtype)
     for b in range(B):
-        cost = _soft_msm_1d(x[b, 0], y[b, 0], c=c, gamma=gamma)
+        cost = _cade_1d(x[b, 0], y[b, 0], c=c, gamma=gamma)
         costs = costs.at[b].set(costs[b] + cost)
     return costs
 
 
-def _soft_msm_1d_from_M(M_slice, x_ch, y_ch, c, gamma):
+def _cade_1d_from_M(M_slice, x_ch, y_ch, c, gamma):
     """
-    Soft-MSM DP using provided match matrix M for diagonal costs.
+    CADE DP using provided match matrix M for diagonal costs.
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ def _soft_msm_1d_from_M(M_slice, x_ch, y_ch, c, gamma):
     return prev_row[U - 1]
 
 
-def _soft_msm_costs_from_M_batched(M, x, y, c, gamma):
+def _cade_costs_from_M_batched(M, x, y, c, gamma):
     """
     DP with provided match matrix M (channel 0 only).
 
@@ -133,14 +133,14 @@ def _soft_msm_costs_from_M_batched(M, x, y, c, gamma):
     B = M.shape[0]
     costs = jnp.zeros(B, dtype=M.dtype)
     for b in range(B):
-        cost = _soft_msm_1d_from_M(M[b], x[b, 0], y[b, 0], c, gamma)
+        cost = _cade_1d_from_M(M[b], x[b, 0], y[b, 0], c, gamma)
         costs = costs.at[b].set(costs[b] + cost)
     return costs
 
 
-def soft_msm_loss(x, y, c=1.0, gamma=1.0, reduction="mean"):
+def cade_loss(x, y, c=1.0, gamma=1.0, reduction="mean"):
     """
-    Compute Soft-MSM loss.
+    Compute CADE loss.
 
     Parameters
     ----------
@@ -160,7 +160,7 @@ def soft_msm_loss(x, y, c=1.0, gamma=1.0, reduction="mean"):
     if gamma <= 0:
         raise ValueError("gamma must be > 0")
 
-    costs = _soft_msm_costs_batched(x, y, c=c, gamma=gamma)
+    costs = _cade_costs_batched(x, y, c=c, gamma=gamma)
 
     if reduction == "mean":
         return jnp.mean(costs)
@@ -169,9 +169,9 @@ def soft_msm_loss(x, y, c=1.0, gamma=1.0, reduction="mean"):
     return costs
 
 
-def soft_msm_alignment_matrix(x, y, c=1.0, gamma=1.0):
+def cade_alignment_matrix(x, y, c=1.0, gamma=1.0):
     """
-    Compute expected diagonal-match occupancy E and Soft-MSM cost.
+    Compute expected diagonal-match occupancy E and CADE cost.
 
     Parameters
     ----------
@@ -191,17 +191,17 @@ def soft_msm_alignment_matrix(x, y, c=1.0, gamma=1.0):
     M = (x64[:, 0, :, None] - y64[:, 0, None, :]) ** 2  # (B, T, U)
 
     def cost_from_M(M_leaf):
-        return _soft_msm_costs_from_M_batched(M_leaf, x64, y64, c, gamma).sum()
+        return _cade_costs_from_M_batched(M_leaf, x64, y64, c, gamma).sum()
 
     E = jax.grad(cost_from_M)(M)
-    s = _soft_msm_costs_batched(x64, y64, c=c, gamma=gamma)
+    s = _cade_costs_batched(x64, y64, c=c, gamma=gamma)
 
     return E.astype(x.dtype), s
 
 
-def soft_msm_grad_x(x, y, c=1.0, gamma=1.0):
+def cade_grad_x(x, y, c=1.0, gamma=1.0):
     """
-    Gradient of Soft-MSM cost w.r.t. x.
+    Gradient of CADE cost w.r.t. x.
 
     Parameters
     ----------
@@ -219,9 +219,9 @@ def soft_msm_grad_x(x, y, c=1.0, gamma=1.0):
     y64 = y.astype(jnp.float64)
 
     def cost_from_x(x_leaf):
-        return _soft_msm_costs_batched(x_leaf, y64, c=c, gamma=gamma).sum()
+        return _cade_costs_batched(x_leaf, y64, c=c, gamma=gamma).sum()
 
     dx = jax.grad(cost_from_x)(x64)
-    s = _soft_msm_costs_batched(x64, y64, c=c, gamma=gamma)
+    s = _cade_costs_batched(x64, y64, c=c, gamma=gamma)
 
     return dx.astype(x.dtype), s

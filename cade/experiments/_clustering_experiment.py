@@ -5,8 +5,8 @@ from tsml_eval.experiments import (
     run_clustering_experiment as tsml_clustering_experiment,
 )
 
-from soft_msm.experiments._clustering_models import CLUSTERING_EXPERIMENT_MODELS
-from soft_msm.experiments._utils import (
+from cade.experiments._clustering_models import CLUSTERING_EXPERIMENT_MODELS
+from cade.experiments._utils import (
     _parse_command_line_bool,
     check_experiment_results_exist,
     load_and_validate_env,

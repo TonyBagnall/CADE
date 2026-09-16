@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax
 import jax.numpy as jnp
 
-from soft_msm.jax._utils import _pairwise_sq_dists, _softmin3
+from cade.jax._utils import _pairwise_sq_dists, _softmin3
 
 
 def _soft_dtw_from_D(D, gamma):

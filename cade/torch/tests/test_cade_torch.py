@@ -8,8 +8,8 @@ from aeon.distances.elastic.soft import (
 )
 from aeon.distances.elastic.soft import soft_msm_grad_x as aeon_soft_msm_grad_x
 
-from soft_msm.torch import SoftMSMLoss, soft_msm_alignment_matrix, soft_msm_grad_x
-from soft_msm.torch.tests._utils import check_arrays_close, check_values_close
+from cade.torch import CADELoss, cade_alignment_matrix, cade_grad_x
+from cade.torch.tests._utils import check_arrays_close, check_values_close
 
 DEVICES = ["cpu"]
 if torch.cuda.is_available():
@@ -32,13 +32,13 @@ CS = [0.25, 0.5, 1.0, 2.0]
         (3, 10, 12),
     ],
 )
-def test_soft_msm_loss_equivalence(device, gamma, c, C, T, U):
+def test_cade_loss_equivalence(device, gamma, c, C, T, U):
     torch.manual_seed(0)
     x = torch.randn(1, C, T, device=device, requires_grad=True, dtype=torch.float32)
     y = torch.randn(1, C, U, device=device, requires_grad=True, dtype=torch.float32)
 
     # Torch implementation
-    loss_fn = SoftMSMLoss(c=c, gamma=gamma, reduction="none")
+    loss_fn = CADELoss(c=c, gamma=gamma, reduction="none")
     s_torch = loss_fn(x, y)[0].item()
 
     # Aeon baseline (expects (C, T)/(C, U) numpy arrays)
@@ -52,13 +52,13 @@ def test_soft_msm_loss_equivalence(device, gamma, c, C, T, U):
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("gamma", GAMMAS)
 @pytest.mark.parametrize("c", CS)
-def test_soft_msm_alignment_matrix_equivalence(device, gamma, c):
+def test_cade_alignment_matrix_equivalence(device, gamma, c):
     torch.manual_seed(1)
     C, T, U = 2, 8, 6
     x = torch.randn(1, C, T, device=device, dtype=torch.float32)
     y = torch.randn(1, C, U, device=device, dtype=torch.float32)
 
-    E_torch, s_torch = soft_msm_alignment_matrix(x, y, c=c, gamma=gamma)
+    E_torch, s_torch = cade_alignment_matrix(x, y, c=c, gamma=gamma)
     E_torch = E_torch.squeeze(0).detach().cpu().numpy()
     s_torch = s_torch.squeeze(0).item()
 
@@ -73,13 +73,13 @@ def test_soft_msm_alignment_matrix_equivalence(device, gamma, c):
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("gamma", GAMMAS)
 @pytest.mark.parametrize("c", CS)
-def test_soft_msm_grad_x_equivalence(device, gamma, c):
+def test_cade_grad_x_equivalence(device, gamma, c):
     torch.manual_seed(2)
     C, T, U = 3, 9, 11
     x = torch.randn(1, C, T, device=device, dtype=torch.float32)
     y = torch.randn(1, C, U, device=device, dtype=torch.float32)
 
-    dx_torch, s_torch = soft_msm_grad_x(x, y, c=c, gamma=gamma)
+    dx_torch, s_torch = cade_grad_x(x, y, c=c, gamma=gamma)
     # Aeon MSM uses channel 0 only; compare channel 0 of gradient
     dx_torch_ch0 = dx_torch.squeeze(0)[0].detach().cpu().numpy()
     s_torch = s_torch.squeeze(0).item()
@@ -93,12 +93,12 @@ def test_soft_msm_grad_x_equivalence(device, gamma, c):
 
 
 @pytest.mark.parametrize("device", DEVICES)
-def test_soft_msm_autograd_smoke(device):
+def test_cade_autograd_smoke(device):
     torch.manual_seed(3)
     B, C, T, U = 4, 2, 12, 10
     x = torch.randn(B, C, T, device=device, requires_grad=True, dtype=torch.float32)
     y = torch.randn(B, C, U, device=device, requires_grad=True, dtype=torch.float32)
-    loss = SoftMSMLoss(c=1.0, gamma=0.1)(x, y)
+    loss = CADELoss(c=1.0, gamma=0.1)(x, y)
     loss.backward()
     assert torch.isfinite(x.grad).all()
     assert torch.isfinite(y.grad).all()

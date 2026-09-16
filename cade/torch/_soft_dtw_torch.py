@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from soft_msm.torch._utils import _pairwise_sq_dists, _softmin3
+from cade.torch._utils import _pairwise_sq_dists, _softmin3
 
 
 def _soft_dtw_from_D(D: torch.Tensor, gamma: float) -> torch.Tensor:

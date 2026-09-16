@@ -3,7 +3,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from soft_msm.custom_models._mlp_forecaster import TorchMLPForecaster, build_mlp
+from cade.custom_models._mlp_forecaster import TorchMLPForecaster, build_mlp
 
 OPTIMIZERS = {
     "SGD": (torch.optim.SGD, {"lr": 1e-3, "momentum": 0.0}),
@@ -15,7 +15,7 @@ def mse_loss_factory(**kwargs) -> nn.Module:
     return nn.MSELoss()
 
 
-def soft_msm_loss_factory(**kwargs) -> nn.Module:
+def cade_loss_factory(**kwargs) -> nn.Module:
     # TODO
     return nn.MSELoss()
 
@@ -28,7 +28,7 @@ def soft_dtw_loss_factory(**kwargs) -> nn.Module:
 LOSSES = {
     "MSE": (mse_loss_factory, {}),
     "soft-DTW": (soft_dtw_loss_factory, {"gamma": 1.0}),
-    "soft-MSM": (soft_msm_loss_factory, {"gamma": 1.0, "c": 1.0}),
+    "CADE": (cade_loss_factory, {"gamma": 1.0, "c": 1.0}),
 }
 
 FORECASTING_EXPERIMENT_MODELS = {}

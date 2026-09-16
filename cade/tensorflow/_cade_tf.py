@@ -1,15 +1,15 @@
-"""TensorFlow implementation of Soft-MSM distance."""
+"""TensorFlow implementation of CADE distance."""
 
 from __future__ import annotations
 
 import tensorflow as tf
 
-from soft_msm.tensorflow._utils import _softmin3, _trans_cost
+from cade.tensorflow._utils import _softmin3, _trans_cost
 
 
-def _soft_msm_1d(x, y, c=1.0, gamma=1.0):
+def _cade_1d(x, y, c=1.0, gamma=1.0):
     """
-    Soft-MSM distance between 1D series.
+    CADE distance between 1D series.
 
     Parameters
     ----------
@@ -51,7 +51,7 @@ def _soft_msm_1d(x, y, c=1.0, gamma=1.0):
     return prev_row[m - 1]
 
 
-def _soft_msm_costs_batched(x, y, c, gamma):
+def _cade_costs_batched(x, y, c, gamma):
     """
     Run DP on channel 0 per batch (matching Aeon's univariate MSM convention).
 
@@ -67,14 +67,14 @@ def _soft_msm_costs_batched(x, y, c, gamma):
     B = x.shape[0]
     costs = [tf.constant(0.0, dtype=x.dtype)] * B
     for b in range(B):
-        cost = _soft_msm_1d(x[b, 0], y[b, 0], c=c, gamma=gamma)
+        cost = _cade_1d(x[b, 0], y[b, 0], c=c, gamma=gamma)
         costs[b] = costs[b] + cost
     return tf.stack(costs)
 
 
-def _soft_msm_1d_from_M(M_slice, x_ch, y_ch, c, gamma):
+def _cade_1d_from_M(M_slice, x_ch, y_ch, c, gamma):
     """
-    Soft-MSM DP using provided match matrix M for diagonal costs.
+    CADE DP using provided match matrix M for diagonal costs.
 
     Parameters
     ----------
@@ -114,7 +114,7 @@ def _soft_msm_1d_from_M(M_slice, x_ch, y_ch, c, gamma):
     return prev_row[U - 1]
 
 
-def _soft_msm_costs_from_M_batched(M, x, y, c, gamma):
+def _cade_costs_from_M_batched(M, x, y, c, gamma):
     """
     DP with provided match matrix M (channel 0 only).
 
@@ -131,14 +131,14 @@ def _soft_msm_costs_from_M_batched(M, x, y, c, gamma):
     B = M.shape[0]
     costs = [tf.constant(0.0, dtype=M.dtype)] * B
     for b in range(B):
-        cost = _soft_msm_1d_from_M(M[b], x[b, 0], y[b, 0], c, gamma)
+        cost = _cade_1d_from_M(M[b], x[b, 0], y[b, 0], c, gamma)
         costs[b] = costs[b] + cost
     return tf.stack(costs)
 
 
-class SoftMSMLoss:
+class CADELoss:
     """
-    Soft-MSM loss.
+    CADE loss.
 
     Parameters
     ----------
@@ -160,7 +160,7 @@ class SoftMSMLoss:
 
     def __call__(self, x: tf.Tensor, y: tf.Tensor) -> tf.Tensor:
         """
-        Compute Soft-MSM loss.
+        Compute CADE loss.
 
         Parameters
         ----------
@@ -172,7 +172,7 @@ class SoftMSMLoss:
         tf.Tensor
             Scalar (if reduced) or shape (B,).
         """
-        costs = _soft_msm_costs_batched(x, y, c=self.c, gamma=self.gamma)
+        costs = _cade_costs_batched(x, y, c=self.c, gamma=self.gamma)
 
         if self.reduction == "mean":
             return tf.reduce_mean(costs)
@@ -181,9 +181,9 @@ class SoftMSMLoss:
         return costs
 
 
-def soft_msm_alignment_matrix(x, y, c=1.0, gamma=1.0):
+def cade_alignment_matrix(x, y, c=1.0, gamma=1.0):
     """
-    Compute expected diagonal-match occupancy E and Soft-MSM cost.
+    Compute expected diagonal-match occupancy E and CADE cost.
 
     Parameters
     ----------
@@ -204,18 +204,18 @@ def soft_msm_alignment_matrix(x, y, c=1.0, gamma=1.0):
 
     with tf.GradientTape() as tape:
         tape.watch(M)
-        costs = _soft_msm_costs_from_M_batched(M, x64, y64, c, gamma)
+        costs = _cade_costs_from_M_batched(M, x64, y64, c, gamma)
         total = tf.reduce_sum(costs)
 
     E = tape.gradient(total, M)
-    s = _soft_msm_costs_batched(x64, y64, c=c, gamma=gamma)
+    s = _cade_costs_batched(x64, y64, c=c, gamma=gamma)
 
     return tf.cast(E, x.dtype), s
 
 
-def soft_msm_grad_x(x, y, c=1.0, gamma=1.0):
+def cade_grad_x(x, y, c=1.0, gamma=1.0):
     """
-    Gradient of Soft-MSM cost w.r.t. x.
+    Gradient of CADE cost w.r.t. x.
 
     Parameters
     ----------
@@ -234,7 +234,7 @@ def soft_msm_grad_x(x, y, c=1.0, gamma=1.0):
 
     with tf.GradientTape() as tape:
         tape.watch(x64)
-        costs = _soft_msm_costs_batched(x64, y64, c=c, gamma=gamma)
+        costs = _cade_costs_batched(x64, y64, c=c, gamma=gamma)
         total = tf.reduce_sum(costs)
 
     dx = tape.gradient(total, x64)

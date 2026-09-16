@@ -8,12 +8,12 @@ from aeon.distances.elastic.soft import (
 )
 from aeon.distances.elastic.soft import soft_dtw_grad_x as aeon_soft_dtw_grad_x
 
-from soft_msm.torch import (
+from cade.torch import (
     SoftDTWLoss,
     soft_dtw_alignment_matrix,
     soft_dtw_grad_x,
 )
-from soft_msm.torch.tests._utils import check_arrays_close, check_values_close
+from cade.torch.tests._utils import check_arrays_close, check_values_close
 
 DEVICES = ["cpu"]
 

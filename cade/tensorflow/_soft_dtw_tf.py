@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import tensorflow as tf
 
-from soft_msm.tensorflow._utils import _pairwise_sq_dists, _softmin3
+from cade.tensorflow._utils import _pairwise_sq_dists, _softmin3
 
 
 def _soft_dtw_from_D(D, gamma):
