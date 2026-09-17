@@ -1,4 +1,4 @@
-dataset,DBA,MBA,soft-DBA-hard-dist-gamma-1.0,soft-DBA-hard-dist-gamma-0.1,soft-DBA-hard-dist-gamma-0.01,soft-DBA-hard-dist-gamma-0.001,soft-MBA-hard-dist-gamma-1.0,soft-MBA-hard-dist-gamma-0.1,soft-MBA-hard-dist-gamma-0.01,soft-MBA-hard-dist-gamma-0.001
+dataset,DBA,MBA,soft-DBA-hard-dist-gamma-1.0,soft-DBA-hard-dist-gamma-0.1,soft-DBA-hard-dist-gamma-0.01,soft-DBA-hard-dist-gamma-0.001,CADE-BA-hard-dist-gamma-1.0,CADE-BA-hard-dist-gamma-0.1,CADE-BA-hard-dist-gamma-0.01,CADE-BA-hard-dist-gamma-0.001
 ACSF1,18330.329,31840.235,27770.092,18757.399,18677.951,18444.369,40352.213,31433.846,31409.381,31340.055
 Adiac,72.492,4186.6,137.893,103.841,84.36,70.454,6604.495,4268.086,4357.75,4308.713
 ArrowHead,291.687,8183.132,612.272,368.058,292.463,326.652,8875.952,7984.415,7990.186,7986.713
