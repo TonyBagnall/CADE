@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>61", "wheel", "toml", "build"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,51 +10,64 @@ readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "Christopher Holder" }]
 requires-python = ">=3.10"
 
-dependencies = [
-    "aeon@git+https://github.com/aeon-toolkit/aeon@soft-msm-experiments#egg=aeon",
-    "matplotlib",
-    "seaborn",
-    "tsml-eval@git+https://github.com/time-series-machine-learning/tsml-eval@main#egg=tsml-eval",
-    "python-dotenv"
-]
+# The CADE losses need only the deep learning framework you choose, so there are no
+# required dependencies. Pick extras:
+#   pytorch / jax / tensorflow   one backend (all = every backend)
+#   notebook                     notebooks/reproduce_paper.ipynb
+#   experiments                  cade/experiments (needs the aeon fork, see below)
+#   dev                          experiments + test and lint tools
+dependencies = []
 
 [project.optional-dependencies]
+pytorch = [
+  "numpy",  # torch warns on import without it
+  "torch>=2.3",
+]
+jax = [
+  "jax>=0.4.31",
+]
+tensorflow = [
+  "tensorflow>=2.15; platform_system == 'Linux' and platform_machine == 'x86_64' and python_version < '3.13'",
+  "tensorflow-macos>=2.15; platform_system == 'Darwin' and platform_machine == 'arm64' and python_version < '3.13'",
+]
+all = [
+  "cade[pytorch,jax,tensorflow]",
+]
+notebook = [
+  "cade[pytorch]",
+  "aeon>=1.5",
+  "jupyter",
+  "matplotlib",
+  "pandas",
+  "seaborn",
+]
+# The soft MSM distance used by the experiments and tests is only on this aeon fork
+# branch for now. It conflicts with the notebook extra's aeon>=1.5, so install
+# experiments/dev and notebook in separate environments until CADE is in released aeon.
+experiments = [
+  "cade[pytorch]",
+  "aeon@git+https://github.com/aeon-toolkit/aeon@soft-msm-experiments#egg=aeon",
+  "matplotlib",
+  "pandas",
+  "python-dotenv",
+  "scikit-learn",
+  "tsml-eval>=0.7",
+]
 dev = [
+  "cade[all,experiments]",
   "black",
   "flake8",
   "mypy",
+  "pre-commit",
   "pytest",
   "pytest-cov",
-  "pytest-xdist",
-  "pytest-timeout",
   "pytest-rerunfailures",
-  "pre-commit"
+  "pytest-timeout",
+  "pytest-xdist",
 ]
 
-pytorch = [
-  "torch>=2.3"
-]
-
-jax = [
-  "jax>=0.4.31",
-  "jaxlib>=0.4.31"
-]
-
-tensorflow = [
-  "tensorflow>=2.15; platform_system == 'Linux' and platform_machine == 'x86_64' and python_version < '3.13'",
-  "tensorflow-macos>=2.15; platform_system == 'Darwin' and platform_machine == 'arm64' and python_version < '3.13'"
-]
-
-all = [
-  "torch>=2.3",
-  "jax>=0.4.31",
-  "jaxlib>=0.4.31",
-  "tensorflow>=2.15; platform_system == 'Linux' and platform_machine == 'x86_64' and python_version < '3.13'",
-  "tensorflow-macos>=2.15; platform_system == 'Darwin' and platform_machine == 'arm64' and python_version < '3.13'"
-]
-
-[tool.setuptools]
-packages = ["cade"]
+[tool.setuptools.packages.find]
+include = ["cade*"]
 
 [tool.ruff.lint]
 select = ["D"]

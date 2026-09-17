@@ -9,7 +9,7 @@ Input (required):
 This script:
 - Loads the CSV into memory
 - Computes "Better (%)" for:
-    soft-MBA-hard-dist-gamma-{g} vs MBA
+    CADE-BA-hard-dist-gamma-{g} vs MBA
     soft-DBA-hard-dist-gamma-{g} vs DBA
   using only datasets where BOTH entries are present (non-empty).
 - Prints the LaTeX table.
@@ -155,12 +155,10 @@ if __name__ == "__main__":
                 f"Required model column '{required}' not found in CSV header."
             )
 
-    # "soft-MBA-hard-dist" is the pre-rename key of CADE-BA-hard-dist; it matches
-    # the column headers already stored in results/clustering/inertia_values.csv.
     mba_results = compare_soft_vs_base(
         inertias=inertias,
         datasets=datasets,
-        soft_base="soft-MBA-hard-dist",
+        soft_base="CADE-BA-hard-dist",
         base_model="MBA",
         gammas=GAMMAS,
     )

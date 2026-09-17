@@ -95,22 +95,39 @@ recover this structure less clearly.
 
 ## Installation
 
-Requires Python 3.10+. Clone the repository and install in editable mode,
-choosing the deep learning backends you need:
+Requires Python 3.10+. To use CADE as a loss, install it with the backend you want:
+
+```bash
+pip install "cade[pytorch] @ git+https://github.com/TonyBagnall/CADE"
+```
+
+Swap `pytorch` for `jax` or `tensorflow`, or use `all` for all three. The loss has
+no other dependencies.
+
+To reproduce the paper or work on the code, clone the repository and pick the
+extra for your task:
 
 ```bash
 git clone https://github.com/TonyBagnall/CADE.git
 cd CADE
-pip install -e .              # core: aeon, experiments and evaluation
-pip install -e ".[pytorch]"   # + PyTorch backend
-pip install -e ".[jax]"       # + JAX backend
-pip install -e ".[tensorflow]"  # + TensorFlow backend (Linux x86_64 / macOS arm64, Python < 3.13)
-pip install -e ".[all,dev]"   # everything, plus test and lint tools
+pip install -e ".[notebook]"      # run notebooks/reproduce_paper.ipynb
+pip install -e ".[experiments]"   # run cade/experiments
+pip install -e ".[dev]"           # experiments, all backends, and test/lint tools
 ```
 
-The Numba implementation and the experiment baselines come from a development
-branch of [aeon](https://github.com/aeon-toolkit/aeon), which is installed
-automatically as a dependency.
+| Extra         | Adds                                                                         |
+|---------------|------------------------------------------------------------------------------|
+| `pytorch`     | PyTorch                                                                      |
+| `jax`         | JAX                                                                          |
+| `tensorflow`  | TensorFlow (Linux x86_64 or macOS arm64, Python < 3.13)                      |
+| `all`         | all three backends                                                           |
+| `notebook`    | PyTorch, aeon ≥ 1.5, Jupyter and plotting libraries                          |
+| `experiments` | PyTorch, the aeon development branch with soft MSM, tsml-eval, python-dotenv |
+| `dev`         | `all` + `experiments`, plus pytest, black, flake8, mypy and pre-commit       |
+
+> **Note.** Until CADE is in a released version of aeon, `experiments` and `dev`
+> install aeon from the `soft-msm-experiments` development branch, while `notebook`
+> needs released aeon. Install them in separate environments. See [TODO](#todo).
 
 ## Usage
 
@@ -165,25 +182,29 @@ dx = jax.grad(lambda x_: cade_loss(x_, y, c=1.0, gamma=0.1))(x)  # same shape as
 the paper's results from the summary CSVs in `results/`:
 
 - Table 1 (averaging) and Table 2 (k-means inertia), reproduced exactly;
-- the clustering and classification average-rank comparisons (Figures 3 and 4),
-  with the same significance procedure as aeon's critical difference diagrams;
+- the clustering and classification critical difference diagrams (Figures 3
+  and 4) and pairwise accuracy scatter plots, drawn with aeon's
+  `plot_critical_difference` and `plot_pairwise_scatter`, together with the
+  pairwise Wilcoxon p-values behind them;
 - a walk-through of CADE itself: the smooth between-gate, alignment matrices, and
   a check of the gradient against autograd and finite differences.
 
 These sections run in seconds with no datasets needed:
 
 ```bash
-pip install -e ".[pytorch]" jupyter
+pip install -e ".[notebook]"
 jupyter notebook notebooks/reproduce_paper.ipynb
 ```
 
 The notebook also has an optional cell that regenerates the CricketX prototypes
-(Figure 2) from the raw data.
+(Figure 2) from the raw data. That cell needs the soft MSM distance from the aeon
+development branch, which released aeon does not include.
 
 ## Re-running the experiments
 
-Experiment scripts live in `cade/experiments/`. They use UCR datasets stored
-locally; copy `.env.example` to `.env` and set:
+Experiment scripts live in `cade/experiments/`. Install with
+`pip install -e ".[experiments]"`. They use UCR datasets stored locally; copy
+`.env.example` to `.env` and set:
 
 ```bash
 DATASET_PATH=/path/to/datasets
@@ -229,11 +250,53 @@ results/            summary results reported in the paper
 
 ## TODO
 
+### aeon
+
+- [ ] **Fix the aeon dependency.** The pinned `soft-msm-experiments` branch fails on
+  import: `aeon/distances/elastic/soft/_soft_msm.py` and
+  `aeon/clustering/averaging/_ba_soft.py` import `aeon.utils.numba._threading`,
+  which does not exist on the branch. This breaks `cade.numba`, the experiment
+  scripts and the tests.
+- [ ] **Get CADE into released aeon.** Merge the soft MSM (CADE) distance,
+  alignment matrix, gradient and soft barycentre averaging into aeon. Released
+  aeon 1.5 includes Soft-DTW but not soft MSM.
+- [ ] **Switch to a released aeon.** Once CADE is released, replace the git
+  dependency in `pyproject.toml` with `aeon>=<version>`. Update the re-exports in
+  `cade/numba/__init__.py`, and the `"soft_msm"` distance strings in
+  `cade/experiments/`, to aeon's final names.
+- [ ] **Run the full test suite** against that aeon release, with all backends
+  installed.
+
+### Paper and code consistency
+
 - [ ] **CADE-e-SMOTE.** Add the rebalancing code (e-SMOTE with the CADE alignment
   matrix replacing the hard MSM path) and the benchmark on 60 imbalanced UCR
   problems. Add the HIVE-COTE 2.0 results (Table 3, Figures 5 and 6) and the
   $\gamma$ sensitivity analysis to `results/`, and fill in section 5 of the
   reproduction notebook.
+- [ ] **Timing results.** Add the runtime experiment behind the complexity
+  section (series lengths 32 to 1024 for DTW, Soft-DTW, MSM and CADE) and its results.
+- [ ] **Gate smoothing parameter.** The paper states $\varepsilon = 10^{-12}$;
+  the PyTorch, TensorFlow and JAX implementations use `eps=1e-9`. Make them agree.
+- [ ] **Multivariate series.** The paper says the implementation supports
+  multivariate series, but the PyTorch, TensorFlow and JAX backends only use
+  channel 0. Implement multichannel support or correct the paper.
+- [ ] **Clustering results.** `results/clustering/` covers 90 datasets; the paper
+  reports 112. Add the missing datasets or update the paper.
+- [ ] **Clustering significance claim.** The paper says CADE-BA is significantly
+  better than Soft-DBA on clustering accuracy. On the committed results the direct
+  one-sided Wilcoxon test gives p = 0.052, above aeon's threshold of 0.033. The two
+  methods are separated in the CD diagram only by clique propagation (see the
+  notebook). Reword the claim or rerun on the full 112 datasets.
+
+### Housekeeping
+
+- [ ] **Forecasting losses.** `cade_loss_factory` and `soft_dtw_loss_factory` in
+  `cade/experiments/_forecasting_models.py` are stubs that return `nn.MSELoss()`.
+  Wire in `cade.torch.CADELoss` and `SoftDTWLoss`.
+- [ ] **Experiment CLIs.** Replace the `RUN_LOCALLY` flags with proper
+  command-line arguments. The classification script's usage message lists
+  `<gamma>` third, but the script reads it as the last, optional argument.
 
 ## Running the tests
 
@@ -241,7 +304,7 @@ The backend tests check each implementation against the aeon reference
 implementation:
 
 ```bash
-pip install -e ".[all,dev]"
+pip install -e ".[dev]"
 pytest
 ```
 
