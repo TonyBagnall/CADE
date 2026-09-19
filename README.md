@@ -56,7 +56,7 @@ squared rather than absolute local costs.
 
 ## Headline results
 
-**Averaging (112 UCR datasets).** CADE barycentres (CADE-BA) are evaluated
+**Averaging (109 UCR datasets).** CADE barycentres (CADE-BA) are evaluated
 under the hard MSM Fréchet loss against MSM Barycentre Averaging (MBA) and a
 stochastic subgradient method (SSG-MBA). The Soft-DTW barycentre under DTW
 loss is shown for comparison. Each cell is the percentage of datasets on which
@@ -121,13 +121,14 @@ pip install -e ".[dev]"           # experiments, all backends, and test/lint too
 | `jax`         | JAX                                                                          |
 | `tensorflow`  | TensorFlow (Linux x86_64 or macOS arm64, Python < 3.13)                      |
 | `all`         | all three backends                                                           |
-| `notebook`    | PyTorch, aeon ≥ 1.5, Jupyter and plotting libraries                          |
+| `notebook`    | PyTorch, aeon 1.4, Jupyter and plotting libraries                            |
 | `experiments` | PyTorch, the aeon development branch with soft MSM, tsml-eval, python-dotenv |
 | `dev`         | `all` + `experiments`, plus pytest, black, flake8, mypy and pre-commit       |
 
 > **Note.** Until CADE is in a released version of aeon, `experiments` and `dev`
-> install aeon from the `soft-msm-experiments` development branch, while `notebook`
-> needs released aeon. Install them in separate environments. See [TODO](#todo).
+> install aeon 1.4 from the `soft-msm-experiments` development branch. That branch
+> currently fails to import (see [TODO](#todo)), so use a separate environment for
+> `notebook` until it is fixed.
 
 ## Usage
 
@@ -181,7 +182,8 @@ dx = jax.grad(lambda x_: cade_loss(x_, y, c=1.0, gamma=0.1))(x)  # same shape as
 [`notebooks/reproduce_paper.ipynb`](notebooks/reproduce_paper.ipynb) regenerates
 the paper's results from the summary CSVs in `results/`:
 
-- Table 1 (averaging) and Table 2 (k-means inertia), reproduced exactly;
+- Table 1 (averaging), reproduced exactly, and Table 2 (k-means inertia),
+  computed over one common set of datasets with coverage of every run reported;
 - the clustering and classification critical difference diagrams (Figures 3
   and 4) and pairwise accuracy scatter plots, drawn with aeon's
   `plot_critical_difference` and `plot_pairwise_scatter`, together with the
@@ -226,9 +228,18 @@ the file; set it to `False` to use command-line arguments.
 
 Summary results used in the paper are in `results/`:
 
-- `results/averaging/`: final barycentre losses for the MSM and DTW geometries.
-- `results/classification/`: mean accuracy and balanced accuracy per dataset.
-- `results/clustering/`: mean ARI, AMI, NMI, clustering accuracy and inertia per dataset.
+| Folder | Contents | Datasets |
+|--------|----------|----------|
+| `results/averaging/` | final barycentre losses for the MSM and DTW geometries, 10 repeats each | 109, complete for every method and $\gamma$ |
+| `results/classification/` | mean accuracy and balanced accuracy | 112, complete |
+| `results/clustering/*_mean.csv` | mean ARI, AMI, NMI and clustering accuracy | 90, complete |
+| `results/clustering/inertia_values.csv` | k-means inertia per model and $\gamma$ | 112 listed; an empty cell is a run that did not complete |
+
+`inertia_values.csv` is incomplete: MBA has all 112 datasets, DBA 109, Soft-DBA
+103–107 per $\gamma$, and CADE-BA 72 ($\gamma=1$), 94, 99 and 97 ($\gamma$ = 0.1,
+0.01, 0.001). Table 2 is therefore computed over the 87 datasets where MBA, DBA
+and every CADE-BA and Soft-DBA run for $\gamma \in \{0.1, 0.01, 0.001\}$ completed,
+so every cell has the same denominator. The notebook lists the missing datasets.
 
 Scripts for turning these into the paper's tables and figures are in
 `cade/evaluation/`.
@@ -259,7 +270,7 @@ results/            summary results reported in the paper
   scripts and the tests.
 - [ ] **Get CADE into released aeon.** Merge the soft MSM (CADE) distance,
   alignment matrix, gradient and soft barycentre averaging into aeon. Released
-  aeon 1.5 includes Soft-DTW but not soft MSM.
+  aeon includes Soft-DTW but not soft MSM.
 - [ ] **Switch to a released aeon.** Once CADE is released, replace the git
   dependency in `pyproject.toml` with `aeon>=<version>`. Update the re-exports in
   `cade/numba/__init__.py`, and the `"soft_msm"` distance strings in
@@ -281,8 +292,17 @@ results/            summary results reported in the paper
 - [ ] **Multivariate series.** The paper says the implementation supports
   multivariate series, but the PyTorch, TensorFlow and JAX backends only use
   channel 0. Implement multichannel support or correct the paper.
-- [ ] **Clustering results.** `results/clustering/` covers 90 datasets; the paper
-  reports 112. Add the missing datasets or update the paper.
+- [ ] **Complete the k-means inertia runs.** `inertia_values.csv` is missing 25
+  datasets from the Table 2 common set. Missing runs: CADE-BA 40 ($\gamma=1$), 18,
+  13 and 15; Soft-DBA 6, 6, 9 and 5; DBA 3. Rerun them so Table 2 can use all 112
+  datasets. Until then, the paper should state that Table 2 uses 87 datasets and
+  report the updated percentages: CADE-BA 86.2, 82.8, 81.6; Soft-DBA 9.2, 50.6,
+  83.9 for $\gamma$ = 0.1, 0.01, 0.001. The current draft's percentages use a
+  different denominator in each cell (94 to 105).
+- [ ] **Clustering metrics dataset count.** The accuracy, ARI, AMI and NMI results
+  (Figure 3) cover 90 datasets. Add the other 22 or state 90 in the paper.
+- [ ] **Averaging dataset count.** The averaging results (Table 1) cover 109
+  datasets (the three Pig datasets are absent); the paper says 112.
 - [ ] **Clustering significance claim.** The paper says CADE-BA is significantly
   better than Soft-DBA on clustering accuracy. On the committed results the direct
   one-sided Wilcoxon test gives p = 0.052, above aeon's threshold of 0.033. The two

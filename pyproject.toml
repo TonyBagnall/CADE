@@ -35,15 +35,14 @@ all = [
 ]
 notebook = [
   "cade[pytorch]",
-  "aeon>=1.5",
+  "aeon>=1.4,<1.5",
   "jupyter",
   "matplotlib",
   "pandas",
   "seaborn",
 ]
 # The soft MSM distance used by the experiments and tests is only on this aeon fork
-# branch for now. It conflicts with the notebook extra's aeon>=1.5, so install
-# experiments/dev and notebook in separate environments until CADE is in released aeon.
+# branch (aeon 1.4) for now. The notebook extra is pinned to aeon 1.4 to match.
 experiments = [
   "cade[pytorch]",
   "aeon@git+https://github.com/aeon-toolkit/aeon@soft-msm-experiments#egg=aeon",
